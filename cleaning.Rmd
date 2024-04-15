@@ -1,0 +1,45 @@
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+data = tibble()
+for (i in 2013:2019){
+  # Download data for the season
+  teams = read_csv(paste0('data/', i, '/teams.csv'), show_col_types=F)
+  vegas = read_csv(paste0('data/', i, '/vegas.txt'), show_col_types=F)
+  
+  # Merge home and away teams' season data for each game
+  games = vegas %>% select(GameId, Location, Team, Pts) %>%
+    pivot_wider(names_from=Location, values_from=c(Team, Pts)) %>%
+    left_join(teams, by=c('Team_away'='Team'), suffix=c('_away', '_home')) %>%
+    left_join(teams, by=c('Team_home'='Team'), suffix=c('_away', '_home')) %>%
+    add_column(Season=i, .before=1)
+  
+  # Combine data for all seasons
+  data = bind_rows(data, games)
+}
+```
+
+```{r}
+# Add column for the game's winner (0 = away, 1 = home)
+moneyline_data = data %>%
+  mutate(winner = if_else(Pts_away > Pts_home, 0, 1)) %>%
+  select(-GameId, -Pts_away, -Pts_home)
+
+# Add column for the game's spread (home - away)
+spreads_data = data %>%
+  mutate(spread = Pts_home - Pts_away) %>%
+  select(-GameId, -Pts_away, -Pts_home)
+
+# Add column for the game's total points
+totals_data = data %>%
+  mutate(total = Pts_home + Pts_away) %>%
+  select(-GameId, -Pts_away, -Pts_home)
+
+# Save data
+write_csv(moneyline_data, 'data/moneyline_data.csv')
+write_csv(spreads_data, 'data/spreads_data.csv')
+write_csv(totals_data, 'data/totals_data.csv')
+```
