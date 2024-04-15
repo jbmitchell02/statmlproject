@@ -1,5 +1,5 @@
 
-```{r}
+```{r, message=F}
 library(tidyverse)
 library(glmnet)
 library(xgboost)
@@ -31,7 +31,3 @@ y_pred = predict(model, s='lambda.min', newx=X$xtest, type='response')
 roc = roc(test$winner, y_pred, levels=c(0, 1), direction='<')
 plot(roc)
 ```
-
-
-
-
